@@ -14,8 +14,11 @@ class OrdinalNumber:
                 last = number.find('+')
                 if last == -1:
                     if number[0] not in '0123456789':
-                        self.number = 1
                         self.deg = OrdinalNumber(1)
+                        if number.find('*') == -1:
+                            self.number = 1
+                        else:
+                            self.number = int(number[number.find('*') + 1:])
                     else:
                         self.number = int(number)
                         self.deg = OrdinalNumber()
@@ -134,10 +137,15 @@ class OrdinalNumber:
             return other
         return self
     
+    @implicit_converter_from_int
     def __add__(self, other):
         ret = self.copy()
         ret += other
         return ret
+    
+    @implicit_converter_from_int
+    def __radd__(self, other):
+        return other + self
     
     @implicit_converter_from_int
     def __imul__(self, other):
@@ -162,10 +170,15 @@ class OrdinalNumber:
                 current = current.next
         return self
     
+    @implicit_converter_from_int
     def __mul__(self, other):
         ret = self.copy()
         ret *= other
         return ret
+    
+    @implicit_converter_from_int
+    def __rmul__(self, other):
+        return other * self
     
     @implicit_converter_from_int
     def __xor__(self, other):
@@ -178,6 +191,9 @@ class OrdinalNumber:
             return result
         head = other.cut_head()
         result = self.cut_head()
+        if self.is_number():
+            result.deg = OrdinalNumber(1)
+        result.number = 1
         result.deg *= head
         if head.deg.is_number() and self.is_number():
             result = OrdinalNumber(1)
@@ -186,23 +202,49 @@ class OrdinalNumber:
         result *= self ** other.next
         return result        
     
+    @implicit_converter_from_int
     def __ixor__(self, other):
         self = self ^ other
         return self
     
+    @implicit_converter_from_int
     def __pow__(self, other):
         return self ^ other
     
+    @implicit_converter_from_int
+    def __rpow__(self, other):
+        return other ^ self
+    
+    @implicit_converter_from_int
+    def __rxor__(self, other):
+        return other ^ self
+    
+    @implicit_converter_from_int
     def __ipow__(self, other):
         self ^= other
         return self
 
-    def get_string(self, symbol = 'w'):
+    def get_string(self, format = 'normal'):
         """get string representation"""
         if self.is_number():
             return f'{self.number}'
-        ret = f'{symbol}^{{{self.deg.get_string(symbol)}}} * {self.number} + {self.next.get_string(symbol)}'
+        if format == 'normal':
+            base_symbol = 'w'
+            prod_symbol = '*'
+        elif format == 'latex':
+            base_symbol = '\omega'
+            prod_symbol = '\cdot'
+        ret = f'{base_symbol}'
+        if self.deg != OrdinalNumber(1):
+            ret += f' ^ {{{self.deg.get_string(format)}}}'
+        if self.number != 1:
+            ret += f' {prod_symbol} {self.number}'
+        if not self.next.is_zero():
+            ret += f' + {self.next.get_string(format)}'
         return ret
     
     def __str__(self):
         return self.get_string()
+    
+    def __repr__(self):
+        return self.get_string('latex')
