@@ -25,7 +25,7 @@ ADVICE = (
 )
 
 async def send_ordinal_number(message, ordinal):
-    file_path = f'./assets/{message.from_user.full_name}.png'
+    file_path = f'./{message.from_user.full_name}.png'
     latex_to_img(r'' + ordinal.get_string('latex')).save(file_path)
     await message.answer_photo(FSInputFile(file_path))
     os.remove(file_path)
